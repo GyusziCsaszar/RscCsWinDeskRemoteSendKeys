@@ -13,7 +13,7 @@ namespace RscRemoteSendKeys_Receiver
     class Program
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v2.01";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v2.02";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
   
         // Incoming data from the client.  
@@ -92,7 +92,12 @@ namespace RscRemoteSendKeys_Receiver
                             int iKey = 0;
                             string sSendKeysParam = "";
                             string sConsoleOut = "";
-                            if (sKey[0] == '{')
+                            if (
+                                    (sKey[0] == '{')
+                                || ((sKey[0] == '%') && (sKey.Length > 1)) // Alt + ...
+                                || ((sKey[0] == '^') && (sKey.Length > 1)) // Ctrl + ...
+                                || ((sKey[0] == '+') && (sKey.Length > 1)) // Shift + ...
+                               )
                             {
                                 sSendKeysParam = sKey;
 
