@@ -37,13 +37,15 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnHide = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            this.chbShowOneKey = new System.Windows.Forms.CheckBox();
             this.tbKeys = new System.Windows.Forms.TextBox();
             this.lLastKey = new System.Windows.Forms.Label();
             this.lLastKeyPressedValue = new System.Windows.Forms.Label();
             this.lKeys = new System.Windows.Forms.Label();
             this.lHost = new System.Windows.Forms.Label();
             this.lHostValue = new System.Windows.Forms.Label();
-            this.btnClear = new System.Windows.Forms.Button();
+            this.chbBeepOnFullBuffer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnClose
@@ -126,6 +128,32 @@
             this.btnSettings.UseVisualStyleBackColor = true;
             this.btnSettings.Click += new System.EventHandler(this.btnSettings_Click);
             // 
+            // btnClear
+            // 
+            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClear.ForeColor = System.Drawing.Color.White;
+            this.btnClear.Location = new System.Drawing.Point(238, 6);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(26, 23);
+            this.btnClear.TabIndex = 4;
+            this.btnClear.Text = "-";
+            this.toolTip1.SetToolTip(this.btnClear, "Clear typed text");
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // chbShowOneKey
+            // 
+            this.chbShowOneKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chbShowOneKey.AutoSize = true;
+            this.chbShowOneKey.Location = new System.Drawing.Point(7, 33);
+            this.chbShowOneKey.Name = "chbShowOneKey";
+            this.chbShowOneKey.Size = new System.Drawing.Size(15, 14);
+            this.chbShowOneKey.TabIndex = 16;
+            this.toolTip1.SetToolTip(this.chbShowOneKey, "Show only one Keystroke below.");
+            this.chbShowOneKey.UseVisualStyleBackColor = true;
+            this.chbShowOneKey.CheckedChanged += new System.EventHandler(this.chbShowOneKey_CheckedChanged);
+            // 
             // tbKeys
             // 
             this.tbKeys.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -164,7 +192,7 @@
             // 
             this.lKeys.AutoSize = true;
             this.lKeys.ForeColor = System.Drawing.Color.White;
-            this.lKeys.Location = new System.Drawing.Point(3, 33);
+            this.lKeys.Location = new System.Drawing.Point(24, 33);
             this.lKeys.Name = "lKeys";
             this.lKeys.Size = new System.Drawing.Size(160, 13);
             this.lKeys.TabIndex = 13;
@@ -190,19 +218,17 @@
             this.lHostValue.Size = new System.Drawing.Size(152, 17);
             this.lHostValue.TabIndex = 15;
             // 
-            // btnClear
+            // chbBeepOnFullBuffer
             // 
-            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClear.ForeColor = System.Drawing.Color.White;
-            this.btnClear.Location = new System.Drawing.Point(238, 6);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(26, 23);
-            this.btnClear.TabIndex = 4;
-            this.btnClear.Text = "-";
-            this.toolTip1.SetToolTip(this.btnClear, "Clear typed text");
-            this.btnClear.UseVisualStyleBackColor = true;
-            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            this.chbBeepOnFullBuffer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chbBeepOnFullBuffer.AutoSize = true;
+            this.chbBeepOnFullBuffer.Location = new System.Drawing.Point(349, 33);
+            this.chbBeepOnFullBuffer.Name = "chbBeepOnFullBuffer";
+            this.chbBeepOnFullBuffer.Size = new System.Drawing.Size(15, 14);
+            this.chbBeepOnFullBuffer.TabIndex = 17;
+            this.toolTip1.SetToolTip(this.chbBeepOnFullBuffer, "Beep when KeyBuffer is full");
+            this.chbBeepOnFullBuffer.UseVisualStyleBackColor = true;
+            this.chbBeepOnFullBuffer.CheckedChanged += new System.EventHandler(this.chbBeepOnFullBuffer_CheckedChanged);
             // 
             // FormMain
             // 
@@ -210,6 +236,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(372, 235);
+            this.Controls.Add(this.chbBeepOnFullBuffer);
+            this.Controls.Add(this.chbShowOneKey);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.lHostValue);
             this.Controls.Add(this.lHost);
@@ -254,6 +282,8 @@
         private System.Windows.Forms.Label lHost;
         private System.Windows.Forms.Label lHostValue;
         private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.CheckBox chbShowOneKey;
+        private System.Windows.Forms.CheckBox chbBeepOnFullBuffer;
     }
 }
 

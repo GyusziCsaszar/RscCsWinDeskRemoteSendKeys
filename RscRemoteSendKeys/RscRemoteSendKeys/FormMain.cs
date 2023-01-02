@@ -22,7 +22,9 @@ namespace RscRemoteSendKeys
     public partial class FormMain : Form
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v1.03";
+        const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
+
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.00";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -74,6 +76,19 @@ namespace RscRemoteSendKeys
                 lHostValue.Text = "N/A";
             else
                 lHostValue.Text = m_sHost + ":" + m_iPort.ToString();
+
+            chbShowOneKey.Checked = (StorageRegistry.Read("ShowOneKeyOnly", 0) > 0);
+            if (chbShowOneKey.Checked)
+            {
+                tbKeys.Text = "";
+                tbKeys.TextAlign = HorizontalAlignment.Center;
+            }
+            else
+            {
+                tbKeys.TextAlign = HorizontalAlignment.Left;
+            }
+
+            chbBeepOnFullBuffer.Checked = (StorageRegistry.Read("BeepOnFullBuffer", 1) > 0);
 
             MessageBoxEx.DarkMode = true;
 
@@ -156,19 +171,12 @@ namespace RscRemoteSendKeys
 
             if (bJustCreated || true)
             {
-                if (m_keyBuffer.GetNumberToDo() > 0)
+                if (m_keyBuffer.GetToDoCount() > 0)
                 {
-                    KeyBufferItem oKey = m_keyBuffer.GetToDoItem();
-                    if (oKey != null)
-                    {
-                        if (Send(oKey))
-                        {
-                            m_keyBuffer.SetToDoItemDone();
-                        }
-                    }
+                    Send();
                 }
 
-                string sTx = m_keyBuffer.GetNumberToDo().ToString();
+                string sTx = m_keyBuffer.GetToDoCount().ToString();
 
                 string sInfo = "Number of keys to send";
                 m_notifyIcon.Text = sInfo;
@@ -176,6 +184,12 @@ namespace RscRemoteSendKeys
                 Color clrTx = SystemColors.InfoText;
                 Color clrBk = SystemColors.Info;
                 int iCY = 2;
+
+                if (m_keyBuffer.IsFull())
+                {
+                    clrTx = Color.White;
+                    clrBk = Color.DarkRed;
+                }
 
                 //m_NotifyIcon.Icon = SystemIcons.Exclamation;
 
@@ -228,13 +242,14 @@ namespace RscRemoteSendKeys
             }
         }
 
-        private bool Send(KeyBufferItem oKey)
+        private void Send()
         {
-            bool bRet = false;
+            if (m_keyBuffer.GetToDoItem() == null)
+                return;
 
             byte[] bytes = new byte[1024];
 
-            if (m_sHost.Length == 0) return false;
+            if (m_sHost.Length == 0) return;
 
             // Connect to a remote device.  
             try
@@ -256,52 +271,91 @@ namespace RscRemoteSendKeys
 
                     //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
 
-                    // Encode the data string into a byte array.
-                    byte[] msg = null;
-                    if (oKey.cKey != '\0')
+                    for (int iCyc = 0; iCyc < ciMAX_KEY_CNT_TO_SEND_ONCE; iCyc++)
                     {
-                        msg = Encoding.ASCII.GetBytes(((int) oKey.cKey).ToString());
-                    }
-                    else if (oKey.sKeyName.Length > 0)
-                    {
-                        msg = Encoding.ASCII.GetBytes(oKey.sKeyName);
-                    }
+                        KeyBufferItem oKey = m_keyBuffer.GetToDoItem();
+                        if (oKey == null)
+                            break;
+                        bool bHasNextToDoItem = m_keyBuffer.HasNextToDoItem();
 
-                    if (msg != null)
-                    {
+                        string sMsg = "";
+                        if (oKey.cKey != '\0')
+                        {
+                            sMsg = ((int) oKey.cKey).ToString();
+                        }
+                        else if (oKey.sKeyName.Length > 0)
+                        {
+                            sMsg = oKey.sKeyName;
+                        }
 
-                        // Send the data through the socket.  
-                        int bytesSent = sender.Send(msg);
+                        bool bBadMsg = false;
+                        if ((sMsg.Length > 0) && (sMsg.IndexOf('\r') < 0) && (sMsg.IndexOf('\n') < 0))
+                        {
+                            // Encode the data string into a byte array.
+                            if (iCyc > 0)
+                            {
+                                sMsg = "\r" + sMsg;
+                            }
 
-                        // Receive the response from the remote device.
-                        /*
-                        int bytesRec = sender.Receive(bytes);
-                        Console.WriteLine("Echoed test = {0}",
-                            Encoding.ASCII.GetString(bytes, 0, bytesRec));
-                        */
+                            if ((iCyc >= (ciMAX_KEY_CNT_TO_SEND_ONCE - 1)) || (!bHasNextToDoItem))
+                            {
+                                sMsg = sMsg + "\n";
+                            }
+
+                            byte[] msg = Encoding.ASCII.GetBytes(sMsg);
+                            if (msg != null)
+                            {
+                                // Send the data through the socket.  
+                                int bytesSent = sender.Send(msg);
+
+                                // Receive the response from the remote device.
+                                /*
+                                int bytesRec = sender.Receive(bytes);
+                                Console.WriteLine("Echoed test = {0}",
+                                    Encoding.ASCII.GetString(bytes, 0, bytesRec));
+                                */
+                            }
+                        }
+                        else
+                        {
+                            bBadMsg = true;
+                        }
+
+                        if (oKey.cKey != '\0')
+                        {
+                            if (chbShowOneKey.Checked)
+                                tbKeys.Text = oKey.cKey.ToString();
+                            else
+                                tbKeys.AppendText(oKey.cKey.ToString());
+                        }
+                        else if (oKey.sKeyName.Length > 0)
+                        {
+                            if (oKey.sKeyName[0] == '{')
+                            {
+                                if (chbShowOneKey.Checked)
+                                    tbKeys.Text = oKey.sKeyName;
+                                else
+                                    tbKeys.AppendText(oKey.sKeyName);
+                            }
+                            else
+                            {
+                                lLastKeyPressedValue.BackColor = Color.Red;
+                            }
+                        }
+                        if (bBadMsg)
+                        {
+                            lLastKeyPressedValue.BackColor = Color.Red;
+                        }
+
+                        m_keyBuffer.SetToDoItemDone();
+
+                        if (!bHasNextToDoItem)
+                            break; //Have to do so... ...we've sent '\r'!!!
                     }
 
                     // Release the socket.  
                     sender.Shutdown(SocketShutdown.Both);
                     sender.Close();
-
-                    if (oKey.cKey != '\0')
-                    {
-                        tbKeys.AppendText(oKey.cKey.ToString());
-                    }
-                    else if (oKey.sKeyName.Length > 0)
-                    {
-                        if (oKey.sKeyName[0] == '{')
-                        {
-                            tbKeys.AppendText(oKey.sKeyName);
-                        }
-                        else
-                        {
-                            lLastKeyPressedValue.BackColor = Color.DarkRed;
-                        }
-                    }
-
-                    bRet = true;
                 }
                 catch (ArgumentNullException ane)
                 {
@@ -321,12 +375,12 @@ namespace RscRemoteSendKeys
             {
                 //Console.WriteLine(e.ToString());
             }
-
-            return bRet;
         }
 
         private void btnClose_Click(object sender, EventArgs e)
         {
+            tbKeys.Focus();
+
             if (m_notifyIcon != null && m_notifyIcon.Visible)
             {
                 if (DialogResult.Yes == MessageBoxEx.Show("Notification area icon is visible for this app!\r\n\r\nDo you really want to close the application?\r\n\r\nPress No to hide instead!", csAPP_TITLE, MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, true /*bTopMost*/))
@@ -355,6 +409,8 @@ namespace RscRemoteSendKeys
 
         private void chbAutoStart_CheckedChanged(object sender, EventArgs e)
         {
+            tbKeys.Focus();
+
             // SRC: https://stackoverflow.com/questions/5089601/how-to-run-a-c-sharp-application-at-windows-startup
             Microsoft.Win32.RegistryKey registryKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey
                         ("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
@@ -413,6 +469,8 @@ namespace RscRemoteSendKeys
 
         private void btnHide_Click(object sender, EventArgs e)
         {
+            tbKeys.Focus();
+
             if (m_notifyIcon != null && m_notifyIcon.Visible)
             {
                 Visible = false;
@@ -421,6 +479,7 @@ namespace RscRemoteSendKeys
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
+            tbKeys.Focus();
 
             FormGraph frmSettings = new FormGraph();
             try
@@ -448,7 +507,33 @@ namespace RscRemoteSendKeys
 
         private void btnClear_Click(object sender, EventArgs e)
         {
+            tbKeys.Focus();
+
             tbKeys.Clear();
+        }
+
+        private void chbShowOneKey_CheckedChanged(object sender, EventArgs e)
+        {
+            tbKeys.Focus();
+
+            StorageRegistry.Write("ShowOneKeyOnly", chbShowOneKey.Checked ? 1 : 0);
+
+            if (chbShowOneKey.Checked)
+            {
+                tbKeys.Text = "";
+                tbKeys.TextAlign = HorizontalAlignment.Center;
+            }
+            else
+            {
+                tbKeys.TextAlign = HorizontalAlignment.Left;
+            }
+        }
+
+        private void chbBeepOnFullBuffer_CheckedChanged(object sender, EventArgs e)
+        {
+            tbKeys.Focus();
+
+            StorageRegistry.Write("BeepOnFullBuffer", chbBeepOnFullBuffer.Checked ? 1 : 0);
         }
 
         private void OnKeyPressed(object sender, GlobalKeyboardHookEventArgs e)
@@ -696,11 +781,24 @@ namespace RscRemoteSendKeys
                         bOk = m_keyBuffer.Add(sChr);
                     }
 
-                    if (bOk)
+                    //if (bOk)
                     {
                         //tbKeys.AppendText(sChr);
                         lLastKeyPressedValue.Text = sChr;
-                        lLastKeyPressedValue.BackColor = Color.DimGray;
+
+                        if (bOk)
+                        {
+                            lLastKeyPressedValue.BackColor = Color.DimGray;
+                        }
+                        else
+                        {
+                            if (chbBeepOnFullBuffer.Checked)
+                            {
+                                System.Media.SystemSounds.Beep.Play();
+                            }
+
+                            lLastKeyPressedValue.BackColor = Color.DarkRed;
+                        }
                     }
                 }
 

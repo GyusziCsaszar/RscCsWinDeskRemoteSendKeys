@@ -7,7 +7,7 @@ namespace RscRemoteSendKeys
 {
     public class KeyBuffer
     {
-        const int ciKEY_BUFFER_SIZE = 100;
+        const int ciKEY_BUFFER_SIZE = 32; //100;
 
         protected KeyBufferItem[] m_aKeys = new KeyBufferItem[ciKEY_BUFFER_SIZE];
 
@@ -32,14 +32,20 @@ namespace RscRemoteSendKeys
             {
                 if (m_iIdxLast < (ciKEY_BUFFER_SIZE - 1) - 1)
                 {
-                    if ((m_iIdxLast + 1) == m_iIdxToDo)
+                    //if ((m_iIdxLast + 1) == m_iIdxToDo)
+                    //    return false;
+
+                    if (!m_aKeys[m_iIdxLast + 1].bDone)
                         return false;
 
                     m_iIdxLast++;
                 }
                 else
                 {
-                    if (m_iIdxToDo == 0)
+                    //if (m_iIdxToDo == 0)
+                    //    return false;
+
+                    if (!m_aKeys[0].bDone)
                         return false;
 
                     m_iIdxLast = 0;
@@ -73,7 +79,7 @@ namespace RscRemoteSendKeys
             return true;
         }
 
-        public int GetNumberToDo()
+        public int GetToDoCount()
         {
             if (m_iIdxToDo == m_iIdxLast)
             {
@@ -89,6 +95,11 @@ namespace RscRemoteSendKeys
                 return ((ciKEY_BUFFER_SIZE - 1) - m_iIdxToDo) + (m_iIdxLast + 1);
         }
 
+        public bool IsFull()
+        {
+            return (GetToDoCount() == ciKEY_BUFFER_SIZE);
+        }
+
         public KeyBufferItem GetToDoItem()
         {
             if (m_aKeys[m_iIdxToDo].bDone)
@@ -97,15 +108,45 @@ namespace RscRemoteSendKeys
             return m_aKeys[m_iIdxToDo];
         }
 
+        public bool HasNextToDoItem()
+        {
+            if (m_iIdxToDo == (ciKEY_BUFFER_SIZE - 1))
+            {
+                if (!m_aKeys[0].bDone)
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                if (!m_aKeys[m_iIdxToDo + 1].bDone)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void SetToDoItemDone()
         {
             m_aKeys[m_iIdxToDo].bDone = true;
             m_aKeys[m_iIdxToDo].cKey = '\0';
             m_aKeys[m_iIdxToDo].sKeyName = "";
 
-            if (!m_aKeys[m_iIdxToDo + 1].bDone)
+            if (m_iIdxToDo == (ciKEY_BUFFER_SIZE - 1))
             {
-                m_iIdxToDo++;
+                if (!m_aKeys[0].bDone)
+                {
+                    m_iIdxToDo = 0;
+                }
+            }
+            else
+            {
+                if (!m_aKeys[m_iIdxToDo + 1].bDone)
+                {
+                    m_iIdxToDo++;
+                }
             }
         }
     }
