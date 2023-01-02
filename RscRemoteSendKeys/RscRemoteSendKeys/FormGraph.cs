@@ -17,25 +17,13 @@ namespace RscRemoteSendKeys
         {
             InitializeComponent();
 
-            tbLogPath.Text = StorageRegistry.Read("LogPath", "");
+            tbHost.Text = StorageRegistry.Read("Host", "");
 
-            chbDoLog.Checked = (StorageRegistry.Read("DoLog", 0) > 0);
-        }
-
-        private void btnLogPath_Click(object sender, EventArgs e)
-        {
-
-            SaveFileDialog dlg = new SaveFileDialog();
-
-            dlg.Filter = "Log Files (*.log)|*.log|Text Files (*.txt)|*.txt|CSV Files (*.csv)|*.csv";
-            dlg.FilterIndex = 0;
-            dlg.DefaultExt = "log";
-
-            if (DialogResult.OK == dlg.ShowDialog())
-            {
-                tbLogPath.Text = dlg.FileName;
-            }
-
+            int iPort = StorageRegistry.Read("Port", 0);
+            if (iPort > 0)
+                tbPort.Text = iPort.ToString();
+            else
+                tbPort.Text = "9000";
         }
 
         private void btnApply_Click(object sender, EventArgs e)
@@ -45,25 +33,28 @@ namespace RscRemoteSendKeys
 
         private bool DoApply()
         {
-            if (tbLogPath.Text.Length > 0)
+            int iPort;
+            if (!Int32.TryParse(tbPort.Text, out iPort))
             {
-                if (!System.IO.File.Exists(tbLogPath.Text))
-                {
-                    try
-                    {
-                        System.IO.File.AppendAllText(tbLogPath.Text, "YYYY;MM;DD;hh;mm;ss;fff;ppp;s\r\n");
-                    }
-                    catch (Exception exc)
-                    {
-                        MessageBoxEx.Show("LOG path is not accessible!\r\n\r\nError: " + exc.Message, FormMain.csAPP_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error, true /*bTopMost*/);
-                        return false;
-                    }
-                }
+                tbPort.Focus();
+                MessageBoxEx.Show("Port value is not a number!", FormMain.csAPP_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error, true /*bTopMost*/);
+                return false;
+            }
+            if (iPort <= 1)
+            {
+                tbPort.Focus();
+                MessageBoxEx.Show("Port value is not valid!", FormMain.csAPP_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error, true /*bTopMost*/);
+                return false;
+            }
+            if (tbHost.Text.Length == 0)
+            {
+                tbHost.Focus();
+                MessageBoxEx.Show("Host value is not valid!", FormMain.csAPP_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error, true /*bTopMost*/);
+                return false;
             }
 
-            StorageRegistry.Write("LogPath", tbLogPath.Text);
-
-            StorageRegistry.Write("DoLog", chbDoLog.Checked ? 1 : 0);
+            StorageRegistry.Write("Host", tbHost.Text);
+            StorageRegistry.Write("Port", iPort);
 
             return true;
         }

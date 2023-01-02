@@ -28,54 +28,39 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblLogPath = new System.Windows.Forms.Label();
-            this.tbLogPath = new System.Windows.Forms.TextBox();
-            this.btnLogPath = new System.Windows.Forms.Button();
+            this.lHost = new System.Windows.Forms.Label();
+            this.tbHost = new System.Windows.Forms.TextBox();
             this.btnApply = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.chbDoLog = new System.Windows.Forms.CheckBox();
+            this.lPort = new System.Windows.Forms.Label();
+            this.tbPort = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // lblLogPath
+            // lHost
             // 
-            this.lblLogPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblLogPath.AutoSize = true;
-            this.lblLogPath.Location = new System.Drawing.Point(13, 148);
-            this.lblLogPath.Name = "lblLogPath";
-            this.lblLogPath.Size = new System.Drawing.Size(72, 13);
-            this.lblLogPath.TabIndex = 0;
-            this.lblLogPath.Text = "LOG file path:";
+            this.lHost.AutoSize = true;
+            this.lHost.Location = new System.Drawing.Point(12, 28);
+            this.lHost.Name = "lHost";
+            this.lHost.Size = new System.Drawing.Size(32, 13);
+            this.lHost.TabIndex = 0;
+            this.lHost.Text = "Host:";
             // 
-            // tbLogPath
+            // tbHost
             // 
-            this.tbLogPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbLogPath.BackColor = System.Drawing.Color.Gainsboro;
-            this.tbLogPath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tbLogPath.ForeColor = System.Drawing.Color.Black;
-            this.tbLogPath.Location = new System.Drawing.Point(91, 145);
-            this.tbLogPath.Name = "tbLogPath";
-            this.tbLogPath.Size = new System.Drawing.Size(301, 20);
-            this.tbLogPath.TabIndex = 2;
-            // 
-            // btnLogPath
-            // 
-            this.btnLogPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLogPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnLogPath.Location = new System.Drawing.Point(398, 142);
-            this.btnLogPath.Name = "btnLogPath";
-            this.btnLogPath.Size = new System.Drawing.Size(27, 23);
-            this.btnLogPath.TabIndex = 1;
-            this.btnLogPath.Text = "...";
-            this.btnLogPath.UseVisualStyleBackColor = true;
-            this.btnLogPath.Click += new System.EventHandler(this.btnLogPath_Click);
+            this.tbHost.BackColor = System.Drawing.Color.Gainsboro;
+            this.tbHost.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.tbHost.ForeColor = System.Drawing.Color.Black;
+            this.tbHost.Location = new System.Drawing.Point(50, 26);
+            this.tbHost.Name = "tbHost";
+            this.tbHost.Size = new System.Drawing.Size(148, 20);
+            this.tbHost.TabIndex = 2;
             // 
             // btnApply
             // 
             this.btnApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnApply.Location = new System.Drawing.Point(171, 190);
+            this.btnApply.Location = new System.Drawing.Point(12, 118);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(75, 23);
             this.btnApply.TabIndex = 4;
@@ -87,7 +72,7 @@
             // 
             this.btnOk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOk.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnOk.Location = new System.Drawing.Point(261, 190);
+            this.btnOk.Location = new System.Drawing.Point(102, 118);
             this.btnOk.Name = "btnOk";
             this.btnOk.Size = new System.Drawing.Size(75, 23);
             this.btnOk.TabIndex = 5;
@@ -100,37 +85,45 @@
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCancel.Location = new System.Drawing.Point(352, 190);
+            this.btnCancel.Location = new System.Drawing.Point(193, 118);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 6;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
             // 
-            // chbDoLog
+            // lPort
             // 
-            this.chbDoLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.chbDoLog.AutoSize = true;
-            this.chbDoLog.Location = new System.Drawing.Point(16, 180);
-            this.chbDoLog.Name = "chbDoLog";
-            this.chbDoLog.Size = new System.Drawing.Size(117, 17);
-            this.chbDoLog.TabIndex = 3;
-            this.chbDoLog.Text = "Log Battery Charge";
-            this.chbDoLog.UseVisualStyleBackColor = true;
+            this.lPort.AutoSize = true;
+            this.lPort.Location = new System.Drawing.Point(12, 59);
+            this.lPort.Name = "lPort";
+            this.lPort.Size = new System.Drawing.Size(29, 13);
+            this.lPort.TabIndex = 7;
+            this.lPort.Text = "Port:";
+            // 
+            // tbPort
+            // 
+            this.tbPort.BackColor = System.Drawing.Color.Gainsboro;
+            this.tbPort.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.tbPort.ForeColor = System.Drawing.Color.Black;
+            this.tbPort.Location = new System.Drawing.Point(50, 57);
+            this.tbPort.Name = "tbPort";
+            this.tbPort.Size = new System.Drawing.Size(74, 20);
+            this.tbPort.TabIndex = 8;
             // 
             // FormGraph
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(437, 225);
-            this.Controls.Add(this.chbDoLog);
+            this.ClientSize = new System.Drawing.Size(278, 153);
+            this.Controls.Add(this.tbPort);
+            this.Controls.Add(this.lPort);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnApply);
-            this.Controls.Add(this.btnLogPath);
-            this.Controls.Add(this.tbLogPath);
-            this.Controls.Add(this.lblLogPath);
+            this.Controls.Add(this.tbHost);
+            this.Controls.Add(this.lHost);
             this.ForeColor = System.Drawing.Color.White;
             this.MinimizeBox = false;
             this.Name = "FormGraph";
@@ -146,12 +139,12 @@
 
         #endregion
 
-        private System.Windows.Forms.Label lblLogPath;
-        private System.Windows.Forms.TextBox tbLogPath;
-        private System.Windows.Forms.Button btnLogPath;
+        private System.Windows.Forms.Label lHost;
+        private System.Windows.Forms.TextBox tbHost;
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.CheckBox chbDoLog;
+        private System.Windows.Forms.Label lPort;
+        private System.Windows.Forms.TextBox tbPort;
     }
 }

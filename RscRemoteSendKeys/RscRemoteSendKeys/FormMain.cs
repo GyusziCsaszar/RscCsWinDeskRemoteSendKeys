@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+using System.Net;
+using System.Net.Sockets;
+
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -19,15 +22,17 @@ namespace RscRemoteSendKeys
     public partial class FormMain : Form
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v1.00";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v1.02";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
 
+        private KeyBuffer m_keyBuffer = new KeyBuffer();
+
         private NotifyIcon m_notifyIcon = null;
 
-        private bool m_bDoLog;
-        private string m_sLogPath;
+        private string m_sHost;
+        private int m_iPort;
 
         // SRC: https://stackoverflow.com/questions/12026664/a-generic-error-occurred-in-gdi-when-calling-bitmap-gethicon
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -63,8 +68,12 @@ namespace RscRemoteSendKeys
             StorageRegistry.m_sAppName  = csAPP_NAME;
             this.Text                   = csAPP_TITLE;
 
-            m_sLogPath = StorageRegistry.Read("LogPath", "");
-            m_bDoLog = (System.IO.File.Exists(m_sLogPath)) && (StorageRegistry.Read("DoLog", 0) > 0);
+            m_sHost = StorageRegistry.Read("Host", "");
+            m_iPort = StorageRegistry.Read("Port", 9000);
+            if (m_sHost.Length == 0)
+                lHostValue.Text = "N/A";
+            else
+                lHostValue.Text = m_sHost + ":" + m_iPort.ToString();
 
             MessageBoxEx.DarkMode = true;
 
@@ -74,18 +83,6 @@ namespace RscRemoteSendKeys
             PlaceWindow();
 
             chbAutoStart.Checked = IsAppStartWithWindowsOn();
-
-            if (m_bDoLog)
-            {
-                try
-                {
-                    System.IO.File.AppendAllText(m_sLogPath, "0000;00;00;00;00;00;000;000;?\r\n"); //Mark App Start...
-                }
-                catch (Exception exc)
-                {
-                    MessageBoxEx.Show("Unable to write LOG file (" + m_sLogPath + ")!\r\n\r\nError: " + exc.Message, FormMain.csAPP_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error, true /*bTopMost*/);
-                }
-            }
 
             RefreshNotifyIcon();
 
@@ -159,9 +156,21 @@ namespace RscRemoteSendKeys
 
             if (bJustCreated || true)
             {
-                string sBattLevel = "Mg";
+                if (m_keyBuffer.GetNumberToDo() > 0)
+                {
+                    KeyBufferItem oKey = m_keyBuffer.GetToDoItem();
+                    if (oKey != null)
+                    {
+                        if (Send(oKey))
+                        {
+                            m_keyBuffer.SetToDoItemDone();
+                        }
+                    }
+                }
 
-                string sInfo = "TODO...";
+                string sTx = m_keyBuffer.GetNumberToDo().ToString();
+
+                string sInfo = "Number of keys to send";
                 m_notifyIcon.Text = sInfo;
 
                 Color clrTx = SystemColors.InfoText;
@@ -193,8 +202,8 @@ namespace RscRemoteSendKeys
                 graphics.DrawRectangle(penBk, new Rectangle(1, 6, 23 - 1, 23 - 10));
                 Font font = new Font("Tahoma", 12); //14);
                 int iCX = 0;
-                if (sBattLevel.Length < 2) iCX += 5;
-                graphics.DrawString(sBattLevel, font, brush, iCX, iCY);
+                if (sTx.Length < 2) iCX += 5;
+                graphics.DrawString(sTx, font, brush, iCX, iCY);
                 // Convert the bitmap with text to an Icon
 
                 IntPtr hIconOld = IntPtr.Zero;
@@ -217,6 +226,103 @@ namespace RscRemoteSendKeys
                 }
 
             }
+        }
+
+        private bool Send(KeyBufferItem oKey)
+        {
+            bool bRet = false;
+
+            byte[] bytes = new byte[1024];
+
+            if (m_sHost.Length == 0) return false;
+
+            // Connect to a remote device.  
+            try
+            {
+                // Establish the remote endpoint for the socket.  
+                // This example uses port 11000 on the local computer.
+                IPHostEntry ipHostInfo = Dns.GetHostEntry(m_sHost); //Dns.GetHostName());
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, m_iPort);
+
+                // Create a TCP/IP  socket.  
+                Socket sender = new Socket(ipAddress.AddressFamily,
+                    SocketType.Stream, ProtocolType.Tcp);
+
+                // Connect the socket to the remote endpoint. Catch any errors.  
+                try
+                {
+                    sender.Connect(remoteEP);
+
+                    //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
+
+                    // Encode the data string into a byte array.
+                    byte[] msg = null;
+                    if (oKey.cKey != '\0')
+                    {
+                        msg = Encoding.ASCII.GetBytes(((int) oKey.cKey).ToString());
+                    }
+                    else if (oKey.sKeyName.Length > 0)
+                    {
+                        msg = Encoding.ASCII.GetBytes(oKey.sKeyName);
+                    }
+
+                    if (msg != null)
+                    {
+
+                        // Send the data through the socket.  
+                        int bytesSent = sender.Send(msg);
+
+                        // Receive the response from the remote device.
+                        /*
+                        int bytesRec = sender.Receive(bytes);
+                        Console.WriteLine("Echoed test = {0}",
+                            Encoding.ASCII.GetString(bytes, 0, bytesRec));
+                        */
+                    }
+
+                    // Release the socket.  
+                    sender.Shutdown(SocketShutdown.Both);
+                    sender.Close();
+
+                    if (oKey.cKey != '\0')
+                    {
+                        tbKeys.AppendText(oKey.cKey.ToString());
+                    }
+                    else if (oKey.sKeyName.Length > 0)
+                    {
+                        if (oKey.sKeyName[0] == '{')
+                        {
+                            tbKeys.AppendText(oKey.sKeyName);
+                        }
+                        else
+                        {
+                            lLastKeyPressedValue.BackColor = Color.DarkRed;
+                        }
+                    }
+
+                    bRet = true;
+                }
+                catch (ArgumentNullException ane)
+                {
+                    //Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                }
+                catch (SocketException se)
+                {
+                    //Console.WriteLine("SocketException : {0}", se.ToString());
+                }
+                catch (Exception e)
+                {
+                    //Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                }
+
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine(e.ToString());
+            }
+
+            return bRet;
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -326,14 +432,23 @@ namespace RscRemoteSendKeys
                 frmSettings = null;
             }
 
-            m_sLogPath = StorageRegistry.Read("LogPath", "");
-            m_bDoLog = (System.IO.File.Exists(m_sLogPath)) && (StorageRegistry.Read("DoLog", 0) > 0);
+            m_sHost = StorageRegistry.Read("Host", "");
+            m_iPort = StorageRegistry.Read("Port", 9000);
+            if (m_sHost.Length == 0)
+                lHostValue.Text = "N/A";
+            else
+                lHostValue.Text = m_sHost + ":" + m_iPort.ToString();
         }
 
         public void SetupKeyboardHooks()
         {
             m_globalKeyboardHook = new GlobalKeyboardHook();
             m_globalKeyboardHook.KeyboardPressed += OnKeyPressed;
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            tbKeys.Clear();
         }
 
         private void OnKeyPressed(object sender, GlobalKeyboardHookEventArgs e)
@@ -354,6 +469,9 @@ namespace RscRemoteSendKeys
 
             if (e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown)
             {
+                if (!Visible) return;
+                if (!tbKeys.Focused) return;
+
                 bool bSetHandled = false;
 
                 string sChr = "";
@@ -361,23 +479,31 @@ namespace RscRemoteSendKeys
                 switch (e.KeyboardData.VirtualCode)
                 {
 
+                    case /*VK_BACK*/ 0x08:
+                    {
+                        sChr = "{BACKSPACE}";
+                        bSetHandled = true;
+                        break;
+                    }
+
                     case /*VK_TAB*/	0x09:
                     {
-                        //sChr = "VK_TAB";
-                        sChr = "\t";
+                        sChr = "{TAB}";
+                        bSetHandled = true;
+                        break;
+                    }
+
+                    case /*VK_RETURN*/ 0x0D:
+                    {
+                        sChr = "{ENTER}";
 
                         bSetHandled = true;
 
                         break;
                     }
 
-                    case /*VK_RETURN*/ 0x0D:
+                    case /*VK_CAPITAL*/	0x14:
                     {
-                        //sChr = "VK_RETURN";
-                        sChr = "\r\n";
-
-                        bSetHandled = true;
-
                         break;
                     }
 
@@ -390,39 +516,76 @@ namespace RscRemoteSendKeys
                         break;
                     }
 
+                    case /*VK_END*/	0x23:
+                    {
+                        sChr = "{END}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_HOME*/ 0x24:
+                    {
+                        sChr = "{HOME}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_LEFT*/ 0x25:
+                    {
+                        sChr = "{LEFT}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_UP*/	0x26:
+                    {
+                        sChr = "{UP}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_RIGHT*/ 0x27:
+                    {
+                        sChr = "{RIGHT}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_DOWN*/ 0x28:
+                    {
+                        sChr = "{DOWN}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_DELETE*/ 0x2E:
+                    {
+                        sChr = "{DELETE}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
                     case /*VK_LSHIFT*/ 0xA0 :
-                    {
-                        //sChr = "VK_LSHIFT";
-                        break;
-                    }
-
                     case /*VK_RSHIFT*/ 0xA1 :
-                    {
-                        //sChr = "VK_RSHIFT";
-                        break;
-                    }
-
                     case /*VK_LCONTROL*/ 0xA2:
-                    {
-                        //sChr = "VK_LCONTROL";
-                        break;
-                    }
-
                     case /*VK_RCONTROL*/ 0xA3:
-                    {
-                        //sChr = "VK_RCONTROL";
-                        break;
-                    }
-
                     case /*VK_LMENU*/ 0xA4:
-                    {
-                        //sChr = "VK_LMENU";
-                        break;
-                    }
-
                     case /*VK_RMENU*/ 0xA5:
                     {
-                        //sChr = "VK_RMENU";
                         break;
                     }
 
@@ -481,9 +644,16 @@ namespace RscRemoteSendKeys
                                 break;
                         }
 
-                        if (sVK.Length != 1) // && sVK.Substring(0, 3) != "Oem")
+                        if (sVK.Length != 1)
                         {
-                            sChr += "\r\n" + sVK;
+                            if ((sVK.Length > 3) && (sVK.Substring(0, 3) == "Oem"))
+                            {
+                                //NOP...
+                            }
+                            else
+                            {
+                                sChr += " " + sVK;
+                            }
                         }
 
                         break;
@@ -492,7 +662,37 @@ namespace RscRemoteSendKeys
 
                 if (sChr.Length > 0)
                 {
-                    tbKeys.AppendText(sChr);
+                    bool bOk = false;
+                    if (sChr.Length == 1)
+                    {
+                        // SRC: https://stackoverflow.com/questions/18299216/send-special-character-with-sendkeys/18299388
+                        char[] acExceptionChars = { '+', '^', '%', '~', '(', ')' };
+                        if (sChr.IndexOfAny(acExceptionChars) >= 0)
+                        {
+                            sChr = "{" + sChr + "}";
+                            bOk = m_keyBuffer.Add(sChr);
+                        }
+                        else if (sChr[0] == '{' || sChr[0] == '}')
+                        {
+                            sChr = "{" + sChr + "}";
+                            bOk = m_keyBuffer.Add(sChr);
+                        }
+                        else
+                        {
+                            bOk = m_keyBuffer.Add(sChr[0]);
+                        }
+                    }
+                    else
+                    {
+                        bOk = m_keyBuffer.Add(sChr);
+                    }
+
+                    if (bOk)
+                    {
+                        //tbKeys.AppendText(sChr);
+                        lLastKeyPressedValue.Text = sChr;
+                        lLastKeyPressedValue.BackColor = Color.DimGray;
+                    }
                 }
 
                 if (Visible)
