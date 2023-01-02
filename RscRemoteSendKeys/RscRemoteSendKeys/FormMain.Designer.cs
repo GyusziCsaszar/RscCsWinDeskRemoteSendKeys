@@ -180,6 +180,7 @@
             this.tbKeys.ShortcutsEnabled = false;
             this.tbKeys.Size = new System.Drawing.Size(358, 161);
             this.tbKeys.TabIndex = 1;
+            this.tbKeys.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.tbKeys_PreviewKeyDown);
             // 
             // lLastKey
             // 

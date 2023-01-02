@@ -24,7 +24,7 @@ namespace RscRemoteSendKeys
 
         const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.02";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.03";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -36,6 +36,8 @@ namespace RscRemoteSendKeys
 
         private string m_sHost;
         private int m_iPort;
+
+        private bool m_bUserPressedX = false;
 
         // SRC: https://stackoverflow.com/questions/12026664/a-generic-error-occurred-in-gdi-when-calling-bitmap-gethicon
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -131,6 +133,17 @@ namespace RscRemoteSendKeys
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            switch (e.CloseReason)
+            {
+                case CloseReason.UserClosing:
+                    if (!m_bUserPressedX)
+                    {
+                        e.Cancel = true;
+                        return;
+                    }
+                    break;
+            }
+
             if (m_notifyIcon != null)
             {
                 m_notifyIcon.Visible = false;
@@ -364,7 +377,12 @@ namespace RscRemoteSendKeys
                         }
                         else if (oKey.sKeyName.Length > 0)
                         {
-                            if (oKey.sKeyName[0] == '{')
+                            if (
+                                    (oKey.sKeyName[0] == '{')
+                                || ((oKey.sKeyName[0] == '%') && (oKey.sKeyName.Length > 1)) // Alt + ...
+                                || ((oKey.sKeyName[0] == '^') && (oKey.sKeyName.Length > 1)) // Ctrl + ...
+                                || ((oKey.sKeyName[0] == '+') && (oKey.sKeyName.Length > 1)) // Shift + ...
+                               )
                             {
                                 if (chbShowOneKey.Checked)
                                     tbKeys.Text = oKey.sKeyName;
@@ -442,6 +460,7 @@ namespace RscRemoteSendKeys
             {
                 if (DialogResult.Yes == MessageBoxEx.Show("Notification area icon is visible for this app!\r\n\r\nDo you really want to close the application?\r\n\r\nPress No to hide instead!", csAPP_TITLE, MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, true /*bTopMost*/))
                 {
+                    m_bUserPressedX = true;
                     Close();
                 }
                 else
@@ -451,6 +470,7 @@ namespace RscRemoteSendKeys
             }
             else
             {
+                m_bUserPressedX = true;
                 Close();
             }
         }
@@ -816,53 +836,7 @@ namespace RscRemoteSendKeys
                     }
                 }
 
-                if (sChr.Length > 0)
-                {
-                    bool bOk = false;
-                    if (sChr.Length == 1)
-                    {
-                        // SRC: https://stackoverflow.com/questions/18299216/send-special-character-with-sendkeys/18299388
-                        char[] acExceptionChars = { '+', '^', '%', '~', '(', ')' };
-                        if (sChr.IndexOfAny(acExceptionChars) >= 0)
-                        {
-                            sChr = "{" + sChr + "}";
-                            bOk = m_keyBuffer.Add(sChr);
-                        }
-                        else if (sChr[0] == '{' || sChr[0] == '}')
-                        {
-                            sChr = "{" + sChr + "}";
-                            bOk = m_keyBuffer.Add(sChr);
-                        }
-                        else
-                        {
-                            bOk = m_keyBuffer.Add(sChr[0]);
-                        }
-                    }
-                    else
-                    {
-                        bOk = m_keyBuffer.Add(sChr);
-                    }
-
-                    //if (bOk)
-                    {
-                        //tbKeys.AppendText(sChr);
-                        lLastKeyPressedValue.Text = sChr;
-
-                        if (bOk)
-                        {
-                            lLastKeyPressedValue.BackColor = Color.DimGray;
-                        }
-                        else
-                        {
-                            if (chbBeepOnFullBuffer.Checked)
-                            {
-                                System.Media.SystemSounds.Beep.Play();
-                            }
-
-                            lLastKeyPressedValue.BackColor = Color.DarkRed;
-                        }
-                    }
-                }
+                AddToKeyBuffer(sChr);
 
                 if (Visible)
                 {
@@ -888,5 +862,70 @@ namespace RscRemoteSendKeys
 
         [DllImport("user32.dll")]
         static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+
+        private void AddToKeyBuffer(string sChr)
+        {
+            if (sChr.Length > 0)
+            {
+                bool bOk = false;
+                if (sChr.Length == 1)
+                {
+                    // SRC: https://stackoverflow.com/questions/18299216/send-special-character-with-sendkeys/18299388
+                    char[] acExceptionChars = { '+', '^', '%', '~', '(', ')' };
+                    if (sChr.IndexOfAny(acExceptionChars) >= 0)
+                    {
+                        sChr = "{" + sChr + "}";
+                        bOk = m_keyBuffer.Add(sChr);
+                    }
+                    else if (sChr[0] == '{' || sChr[0] == '}')
+                    {
+                        sChr = "{" + sChr + "}";
+                        bOk = m_keyBuffer.Add(sChr);
+                    }
+                    else
+                    {
+                        bOk = m_keyBuffer.Add(sChr[0]);
+                    }
+                }
+                else
+                {
+                    bOk = m_keyBuffer.Add(sChr);
+                }
+
+                //if (bOk)
+                {
+                    //tbKeys.AppendText(sChr);
+                    lLastKeyPressedValue.Text = sChr;
+
+                    if (bOk)
+                    {
+                        lLastKeyPressedValue.BackColor = Color.DimGray;
+                    }
+                    else
+                    {
+                        if (chbBeepOnFullBuffer.Checked)
+                        {
+                            System.Media.SystemSounds.Beep.Play();
+                        }
+
+                        lLastKeyPressedValue.BackColor = Color.DarkRed;
+                    }
+                }
+            }
+        }
+
+        private void tbKeys_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (e.Alt)
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.F4:
+                        AddToKeyBuffer("%{F4}");
+                        e.IsInputKey = false;
+                        break;
+                }
+            }
+        }
     }
 }
