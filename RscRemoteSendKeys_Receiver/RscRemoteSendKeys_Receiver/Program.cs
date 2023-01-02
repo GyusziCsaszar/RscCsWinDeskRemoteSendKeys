@@ -13,7 +13,7 @@ namespace RscRemoteSendKeys_Receiver
     class Program
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v1.10";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v1.02";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
   
         // Incoming data from the client.  
@@ -120,6 +120,10 @@ namespace RscRemoteSendKeys_Receiver
                             for (int i = 0; i < sConsoleOutLast.Length; i++)
                             {
                                 Console.Write(((char) 8));
+                            }
+                            for (int i = sConsoleOut.Length; i < sConsoleOutLast.Length; i++)
+                            {
+                                sConsoleOut += " ";
                             }
                         }
                         Console.Write(sConsoleOut);
