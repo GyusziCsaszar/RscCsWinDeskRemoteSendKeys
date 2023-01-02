@@ -24,7 +24,7 @@ namespace RscRemoteSendKeys
 
         const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.01";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.02";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -71,7 +71,7 @@ namespace RscRemoteSendKeys
             StorageRegistry.m_sAppName  = csAPP_NAME;
             this.Text                   = csAPP_TITLE;
 
-            m_sHost = StorageRegistry.Read("Host", "");
+            m_sHost = StorageRegistry.Read("Host", "").Trim();
             m_iPort = StorageRegistry.Read("Port", 9000);
             if (m_sHost.Length == 0)
                 lHostValue.Text = "N/A";
@@ -270,27 +270,37 @@ namespace RscRemoteSendKeys
 
             byte[] bytes = new byte[1024];
 
-            if (m_sHost.Length == 0) return;
+            // DO NOT!!! //if (m_sHost.Length == 0) return;
+            bool bDoSend = true;
+            if (m_sHost.Length == 0) bDoSend = false;
 
             // Connect to a remote device.  
             try
             {
-                // Establish the remote endpoint for the socket.  
-                // This example uses port 11000 on the local computer.
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(m_sHost); //Dns.GetHostName());
-                IPAddress ipAddress = ipHostInfo.AddressList[0];
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, m_iPort);
+                IPEndPoint remoteEP = null;
+                Socket sender = null;
 
-                // Create a TCP/IP  socket.  
-                Socket sender = new Socket(ipAddress.AddressFamily,
-                    SocketType.Stream, ProtocolType.Tcp);
+                if (bDoSend)
+                {
+                    // Establish the remote endpoint for the socket.  
+                    // This example uses port 11000 on the local computer.
+                    IPHostEntry ipHostInfo = Dns.GetHostEntry(m_sHost); //Dns.GetHostName());
+                    IPAddress ipAddress = ipHostInfo.AddressList[0];
+                    remoteEP = new IPEndPoint(ipAddress, m_iPort);
+
+                    // Create a TCP/IP  socket.  
+                    sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                }
 
                 // Connect the socket to the remote endpoint. Catch any errors.  
                 try
                 {
-                    sender.Connect(remoteEP);
+                    if (bDoSend)
+                    {
+                        sender.Connect(remoteEP);
+                        //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
+                    }
 
-                    //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
 
                     for (int iCyc = 0; iCyc < ciMAX_KEY_CNT_TO_SEND_ONCE; iCyc++)
                     {
@@ -323,18 +333,21 @@ namespace RscRemoteSendKeys
                                 sMsg = sMsg + "\n";
                             }
 
-                            byte[] msg = Encoding.ASCII.GetBytes(sMsg);
-                            if (msg != null)
+                            if (bDoSend)
                             {
-                                // Send the data through the socket.  
-                                int bytesSent = sender.Send(msg);
+                                byte[] msg = Encoding.ASCII.GetBytes(sMsg);
+                                if (msg != null)
+                                {
+                                    // Send the data through the socket.  
+                                    int bytesSent = sender.Send(msg);
 
-                                // Receive the response from the remote device.
-                                /*
-                                int bytesRec = sender.Receive(bytes);
-                                Console.WriteLine("Echoed test = {0}",
-                                    Encoding.ASCII.GetString(bytes, 0, bytesRec));
-                                */
+                                    // Receive the response from the remote device.
+                                    /*
+                                    int bytesRec = sender.Receive(bytes);
+                                    Console.WriteLine("Echoed test = {0}",
+                                        Encoding.ASCII.GetString(bytes, 0, bytesRec));
+                                    */
+                                }
                             }
                         }
                         else
@@ -374,9 +387,12 @@ namespace RscRemoteSendKeys
                             break; //Have to do so... ...we've sent '\r'!!!
                     }
 
-                    // Release the socket.  
-                    sender.Shutdown(SocketShutdown.Both);
-                    sender.Close();
+                    if (bDoSend)
+                    {
+                        // Release the socket.  
+                        sender.Shutdown(SocketShutdown.Both);
+                        sender.Close();
+                    }
                 }
                 catch (ArgumentNullException ane)
                 {
@@ -532,7 +548,7 @@ namespace RscRemoteSendKeys
                 frmSettings = null;
             }
 
-            m_sHost = StorageRegistry.Read("Host", "");
+            m_sHost = StorageRegistry.Read("Host", "").Trim();
             m_iPort = StorageRegistry.Read("Port", 9000);
             if (m_sHost.Length == 0)
                 lHostValue.Text = "N/A";
@@ -605,121 +621,126 @@ namespace RscRemoteSendKeys
                 switch (e.KeyboardData.VirtualCode)
                 {
 
-                    case /*VK_BACK*/ 0x08:
+                    case /*VK_CANCEL*/      0x03: { sChr = "^c";            bSetHandled = true;         break; }
+
+                    case /*VK_BACK*/        0x08: { sChr = "{BACKSPACE}";   bSetHandled = true;         break; }
+
+                    case /*VK_TAB*/         0x09: { sChr = "{TAB}";         bSetHandled = true;         break; }
+
+                    case /*VK_CLEAR*/       0x0C: { sChr = "^l";            bSetHandled = true;         break; }
+
+                    case /*VK_RETURN*/      0x0D: { sChr = "{ENTER}";       bSetHandled = true;         break; }
+
+                    case /*VK_PAUSE*/       0x13: { sChr = "{BREAK}";       bSetHandled = true;         break; }
+
+                    case /*VK_CAPITAL*/	    0x14: { sChr = "{CAPSLOCK}";    bSetHandled = true;         break; }
+
+                    case /*VK_ESCAPE*/      0x1B: { sChr = "{ESC}";         bSetHandled = true;         break; }
+
+                    case /*VK_SPACE*/       0x20: { sChr = " ";             bSetHandled = true;         break; }
+
+                    case /*VK_PRIOR*/	    0x21: { sChr = "{PGUP}";        bSetHandled = true;         break; }
+
+                    case /*VK_NEXT*/	    0x22: { sChr = "{PGDN}";        bSetHandled = true;         break; }
+
+                    case /*VK_END*/         0x23: { sChr = "{END}";         bSetHandled = true;         break; }
+
+                    case /*VK_HOME*/        0x24: { sChr = "{HOME}";        bSetHandled = true;         break; }
+
+                    case /*VK_LEFT*/        0x25: { sChr = "{LEFT}";        bSetHandled = true;         break; }
+
+                    case /*VK_UP*/          0x26: { sChr = "{UP}";          bSetHandled = true;         break; }
+
+                    case /*VK_RIGHT*/       0x27: { sChr = "{RIGHT}";       bSetHandled = true;         break; }
+
+                    case /*VK_DOWN*/        0x28: { sChr = "{DOWN}";        bSetHandled = true;         break; }
+
+                    //VK_SELECT	    0x29
+                    //VK_PRINT	    0x2A
+                    //VK_EXECUTE	0x2B
+
+                    case /*VK_SNAPSHOT*/    0x2C: { sChr = "{INSERT}";      bSetHandled = true;         break; }
+
+                    case /*VK_INSERT*/      0x2D: { sChr = "{PRTSC}";       bSetHandled = true;         break; }
+
+                    case /*VK_DELETE*/      0x2E: { sChr = "{DELETE}";      bSetHandled = true;         break; }
+
+                    case /*VK_HELP*/	    0x2F: { sChr = "{HELP}";        bSetHandled = true;         break; }
+
+                    case /*VK_LWIN*/	    0x5B: { sChr = "{VK_LWIN}";     bSetHandled = true;         break; }
+
+                    case /*VK_RWIN*/	    0x5C: { sChr = "{VK_RWIN}";     bSetHandled = true;         break; }
+
+                    case /*VK_APPS*/	    0x5D: { sChr = "{VK_APPS}";     bSetHandled = true;         break; }
+
+                    case /*VK_NUMPAD0*/	    0x60: { sChr = "0";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD1*/	    0x61: { sChr = "1";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD2*/	    0x62: { sChr = "2";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD3*/	    0x63: { sChr = "3";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD4*/	    0x64: { sChr = "4";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD5*/	    0x65: { sChr = "5";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD6*/	    0x66: { sChr = "6";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD7*/	    0x67: { sChr = "7";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD8*/	    0x68: { sChr = "8";             bSetHandled = true;         break; }
+                    case /*VK_NUMPAD9*/	    0x69: { sChr = "9";             bSetHandled = true;         break; }
+
+                    case /*VK_MULTIPLY*/	0x6A: { sChr = "{MULTIPLY}";    bSetHandled = true;         break; }
+
+                    case /*VK_ADD*/         0x6B: { sChr = "{ADD}";         bSetHandled = true;         break; }
+
+                    case /*VK_SEPARATOR*/	0x6C:
                     {
-                        sChr = "{BACKSPACE}";
-                        bSetHandled = true;
-                        break;
-                    }
-
-                    case /*VK_TAB*/	0x09:
-                    {
-                        sChr = "{TAB}";
-                        bSetHandled = true;
-                        break;
-                    }
-
-                    case /*VK_RETURN*/ 0x0D:
-                    {
-                        sChr = "{ENTER}";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_CAPITAL*/	0x14:
-                    {
-                        break;
-                    }
-
-                    case /*VK_SPACE*/ 0x20:
-                    {
-                        sChr = " ";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_END*/	0x23:
-                    {
-                        sChr = "{END}";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_HOME*/ 0x24:
-                    {
-                        sChr = "{HOME}";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_LEFT*/ 0x25:
-                    {
-                        sChr = "{LEFT}";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_UP*/	0x26:
-                    {
-                        sChr = "{UP}";
-
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_RIGHT*/ 0x27:
-                    {
-                        sChr = "{RIGHT}";
+                        System.Globalization.CultureInfo ci = System.Threading.Thread.CurrentThread.CurrentCulture;
+                        //ci.NumberFormat.CurrencyDecimalSeparator;
+                        sChr = ci.NumberFormat.CurrencyGroupSeparator;
 
                         bSetHandled = true;
 
                         break;
                     }
 
-                    case /*VK_DOWN*/ 0x28:
+                    case /*VK_SUBTRACT*/	0x6D: { sChr = "{SUBTRACT}";    bSetHandled = true;         break; }
+
+                    case /*VK_DECIMAL*/     0x6E:
                     {
-                        sChr = "{DOWN}";
+                        System.Globalization.CultureInfo ci = System.Threading.Thread.CurrentThread.CurrentCulture;
+                        sChr = ci.NumberFormat.CurrencyDecimalSeparator;
+                        //ci.NumberFormat.CurrencyGroupSeparator;
 
                         bSetHandled = true;
 
                         break;
                     }
 
-                    case /*VK_SNAPSHOT*/ 0x2C:
-                    {
-                        sChr = "{PRTSC}";
+                    case /*VK_DIVIDE*/      0x6F: { sChr = "{DIVIDE}";      bSetHandled = true;         break; }
 
-                        bSetHandled = true;
+                    case /*VK_F1*/	        0x70: { sChr = "{F1}";          bSetHandled = true;         break; }
+                    case /*VK_F2*/	        0x71: { sChr = "{F2}";          bSetHandled = true;         break; }
+                    case /*VK_F3*/	        0x72: { sChr = "{F3}";          bSetHandled = true;         break; }
+                    case /*VK_F4*/	        0x73: { sChr = "{F4}";          bSetHandled = true;         break; }
+                    case /*VK_F5*/	        0x74: { sChr = "{F5}";          bSetHandled = true;         break; }
+                    case /*VK_F6*/	        0x75: { sChr = "{F6}";          bSetHandled = true;         break; }
+                    case /*VK_F7*/	        0x76: { sChr = "{F7}";          bSetHandled = true;         break; }
+                    case /*VK_F8*/	        0x77: { sChr = "{F8}";          bSetHandled = true;         break; }
+                    case /*VK_F9*/	        0x78: { sChr = "{F9}";          bSetHandled = true;         break; }
+                    case /*VK_F10*/	        0x79: { sChr = "{F10}";         bSetHandled = true;         break; }
+                    case /*VK_F11*/	        0x7A: { sChr = "{F11}";         bSetHandled = true;         break; }
+                    case /*VK_F12*/	        0x7B: { sChr = "{F12}";         bSetHandled = true;         break; }
+                    case /*VK_F13*/	        0x7C: { sChr = "{F13}";         bSetHandled = true;         break; }
+                    case /*VK_F14*/	        0x7D: { sChr = "{F14}";         bSetHandled = true;         break; }
+                    case /*VK_F15*/	        0x7E: { sChr = "{F15}";         bSetHandled = true;         break; }
+                    case /*VK_F16*/	        0x7F: { sChr = "{F16}";         bSetHandled = true;         break; }
 
-                        break;
-                    }
+                    case /*VK_NUMLOCK*/     0x90: { sChr = "{NUMLOCK}";                                 break; }
 
-                    case /*VK_DELETE*/ 0x2E:
-                    {
-                        sChr = "{DELETE}";
+                    case /*VK_SCROLL*/	    0x91: { sChr = "{SCROLLLOCK}";  bSetHandled = true;         break; }
 
-                        bSetHandled = true;
-
-                        break;
-                    }
-
-                    case /*VK_LSHIFT*/ 0xA0 :
-                    case /*VK_RSHIFT*/ 0xA1 :
-                    case /*VK_LCONTROL*/ 0xA2:
-                    case /*VK_RCONTROL*/ 0xA3:
-                    case /*VK_LMENU*/ 0xA4:
-                    case /*VK_RMENU*/ 0xA5:
+                    case /*VK_LSHIFT*/      0xA0:
+                    case /*VK_RSHIFT*/      0xA1:
+                    case /*VK_LCONTROL*/    0xA2:
+                    case /*VK_RCONTROL*/    0xA3:
+                    case /*VK_LMENU*/       0xA4:
+                    case /*VK_RMENU*/       0xA5:
                     {
                         break;
                     }

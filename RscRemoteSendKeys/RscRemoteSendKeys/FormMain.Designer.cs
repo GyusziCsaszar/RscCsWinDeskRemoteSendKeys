@@ -39,13 +39,13 @@
             this.btnSettings = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.chbShowOneKey = new System.Windows.Forms.CheckBox();
+            this.chbBeepOnFullBuffer = new System.Windows.Forms.CheckBox();
             this.tbKeys = new System.Windows.Forms.TextBox();
             this.lLastKey = new System.Windows.Forms.Label();
             this.lLastKeyPressedValue = new System.Windows.Forms.Label();
             this.lKeys = new System.Windows.Forms.Label();
             this.lHost = new System.Windows.Forms.Label();
             this.lHostValue = new System.Windows.Forms.Label();
-            this.chbBeepOnFullBuffer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnClose
@@ -154,6 +154,18 @@
             this.chbShowOneKey.UseVisualStyleBackColor = true;
             this.chbShowOneKey.CheckedChanged += new System.EventHandler(this.chbShowOneKey_CheckedChanged);
             // 
+            // chbBeepOnFullBuffer
+            // 
+            this.chbBeepOnFullBuffer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chbBeepOnFullBuffer.AutoSize = true;
+            this.chbBeepOnFullBuffer.Location = new System.Drawing.Point(349, 33);
+            this.chbBeepOnFullBuffer.Name = "chbBeepOnFullBuffer";
+            this.chbBeepOnFullBuffer.Size = new System.Drawing.Size(15, 14);
+            this.chbBeepOnFullBuffer.TabIndex = 17;
+            this.toolTip1.SetToolTip(this.chbBeepOnFullBuffer, "Beep when KeyBuffer is full");
+            this.chbBeepOnFullBuffer.UseVisualStyleBackColor = true;
+            this.chbBeepOnFullBuffer.CheckedChanged += new System.EventHandler(this.chbBeepOnFullBuffer_CheckedChanged);
+            // 
             // tbKeys
             // 
             this.tbKeys.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -165,6 +177,7 @@
             this.tbKeys.Multiline = true;
             this.tbKeys.Name = "tbKeys";
             this.tbKeys.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tbKeys.ShortcutsEnabled = false;
             this.tbKeys.Size = new System.Drawing.Size(358, 161);
             this.tbKeys.TabIndex = 1;
             // 
@@ -217,18 +230,6 @@
             this.lHostValue.Padding = new System.Windows.Forms.Padding(0, 2, 0, 2);
             this.lHostValue.Size = new System.Drawing.Size(152, 17);
             this.lHostValue.TabIndex = 15;
-            // 
-            // chbBeepOnFullBuffer
-            // 
-            this.chbBeepOnFullBuffer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chbBeepOnFullBuffer.AutoSize = true;
-            this.chbBeepOnFullBuffer.Location = new System.Drawing.Point(349, 33);
-            this.chbBeepOnFullBuffer.Name = "chbBeepOnFullBuffer";
-            this.chbBeepOnFullBuffer.Size = new System.Drawing.Size(15, 14);
-            this.chbBeepOnFullBuffer.TabIndex = 17;
-            this.toolTip1.SetToolTip(this.chbBeepOnFullBuffer, "Beep when KeyBuffer is full");
-            this.chbBeepOnFullBuffer.UseVisualStyleBackColor = true;
-            this.chbBeepOnFullBuffer.CheckedChanged += new System.EventHandler(this.chbBeepOnFullBuffer_CheckedChanged);
             // 
             // FormMain
             // 
