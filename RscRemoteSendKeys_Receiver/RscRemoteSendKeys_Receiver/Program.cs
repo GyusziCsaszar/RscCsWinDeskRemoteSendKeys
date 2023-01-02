@@ -13,7 +13,7 @@ namespace RscRemoteSendKeys_Receiver
     class Program
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v2.00";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v2.01";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
   
         // Incoming data from the client.  
@@ -135,7 +135,25 @@ namespace RscRemoteSendKeys_Receiver
                             {
                                 try
                                 {
-                                    SendKeys.SendWait(sSendKeysParam);
+                                    if (sSendKeysParam.ToUpper() == "{VK_LWIN}")
+                                    {
+                                        KeyboardSend.KeyDown(Keys.LWin);
+                                        KeyboardSend.KeyUp(Keys.LWin);
+                                    }
+                                    else if (sSendKeysParam.ToUpper() == "{VK_RWIN}")
+                                    {
+                                        KeyboardSend.KeyDown(Keys.RWin);
+                                        KeyboardSend.KeyUp(Keys.RWin);
+                                    }
+                                    else if (sSendKeysParam.ToUpper() == "{VK_APPS}")
+                                    {
+                                        KeyboardSend.KeyDown(Keys.Apps);
+                                        KeyboardSend.KeyUp(Keys.Apps);
+                                    }
+                                    else
+                                    {
+                                        SendKeys.SendWait(sSendKeysParam);
+                                    }
                                 }
                                 catch (Exception exc)
                                 {
