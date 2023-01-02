@@ -16,6 +16,14 @@ namespace RscRemoteSendKeys
 
         public KeyBuffer()
         {
+            Clear();
+        }
+
+        public void Clear()
+        {
+            m_iIdxToDo = 0;
+            m_iIdxLast = 0;
+
             for (int i = 0; i < ciKEY_BUFFER_SIZE; i++)
             {
                 m_aKeys[i] = new KeyBufferItem();

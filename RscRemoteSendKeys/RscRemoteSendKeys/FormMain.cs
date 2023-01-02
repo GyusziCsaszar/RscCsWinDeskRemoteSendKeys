@@ -24,7 +24,7 @@ namespace RscRemoteSendKeys
 
         const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.04";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.05";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -168,7 +168,7 @@ namespace RscRemoteSendKeys
             m_globalKeyboardHook.Dispose();
         }
 
-        private void RefreshNotifyIcon()
+        private bool RefreshNotifyIcon()
         {
             UpdateNotifyIcon();
 
@@ -176,17 +176,19 @@ namespace RscRemoteSendKeys
             {
                 if (Visible)
                 {
-                    Send();
+                    if (!Send()) return false;
                 }
 
                 if (m_notifyIcon == null)
-                    return; //User Close on Error...
+                    return true; //User Close on Error...
 
                 if (m_iToDoCount_Prev != m_keyBuffer.GetToDoCount())
                 {
                     UpdateNotifyIcon();
                 }
             }
+
+            return true;
         }
 
         private void UpdateNotifyIcon()
@@ -276,10 +278,10 @@ namespace RscRemoteSendKeys
             }
         }
 
-        private void Send()
+        private bool Send()
         {
             if (m_keyBuffer.GetToDoItem() == null)
-                return;
+                return true;
 
             byte[] bytes = new byte[1024];
 
@@ -418,7 +420,8 @@ namespace RscRemoteSendKeys
                     if (dr == DialogResult.Cancel)
                     {
                         //Visible = false;
-                        Close();
+                        //Close();
+                        return false;
                     }
                 }
                 catch (SocketException se)
@@ -427,7 +430,8 @@ namespace RscRemoteSendKeys
                     if (dr == DialogResult.Cancel)
                     {
                         //Visible = false;
-                        Close();
+                        //Close();
+                        return false;
                     }
                 }
                 catch (Exception e)
@@ -436,7 +440,8 @@ namespace RscRemoteSendKeys
                     if (dr == DialogResult.Cancel)
                     {
                         //Visible = false;
-                        Close();
+                        //Close();
+                        return false;
                     }
                 }
 
@@ -447,9 +452,12 @@ namespace RscRemoteSendKeys
                 if (dr == DialogResult.Cancel)
                 {
                     //Visible = false;
-                    Close();
+                    //Close();
+                    return false;
                 }
             }
+
+            return true;
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -479,9 +487,21 @@ namespace RscRemoteSendKeys
         {
             tmrRefresh.Enabled = false;
 
-            RefreshNotifyIcon();
+            if (RefreshNotifyIcon())
+            {
+                tmrRefresh.Enabled = true;
+            }
+            else
+            {
+                //m_bUserPressedX = true;
+                //Close();
 
-            tmrRefresh.Enabled = true;
+                m_keyBuffer.Clear();
+                lLastKeyPressedValue.Text = "";
+                tbKeys.Text = "";
+
+                tmrRefresh.Enabled = true;
+            }
         }
 
         private void chbAutoStart_CheckedChanged(object sender, EventArgs e)
@@ -904,7 +924,14 @@ namespace RscRemoteSendKeys
                     }
                     else
                     {
-                        lLastKeyPressedValue.Text = sChr;
+                        if (sChr.Length == 1)
+                        {
+                            lLastKeyPressedValue.Text = sChr + " CHR(" + ((int)(sChr[0])).ToString() + ")";
+                        }
+                        else
+                        {
+                            lLastKeyPressedValue.Text = sChr;
+                        }
                     }
 
                     if (bOk)
