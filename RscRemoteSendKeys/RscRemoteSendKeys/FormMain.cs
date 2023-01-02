@@ -24,7 +24,7 @@ namespace RscRemoteSendKeys
 
         const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.03";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.04";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -679,9 +679,11 @@ namespace RscRemoteSendKeys
                     //VK_PRINT	    0x2A
                     //VK_EXECUTE	0x2B
 
-                    case /*VK_SNAPSHOT*/    0x2C: { sChr = "{INSERT}";      bSetHandled = true;         break; }
+                  //case /*VK_SNAPSHOT*/    0x2C: { sChr = "{INSERT}";      bSetHandled = true;         break; }
+                    case /*VK_SNAPSHOT*/    0x2D: { sChr = "{INSERT}";      bSetHandled = true;         break; }
 
-                    case /*VK_INSERT*/      0x2D: { sChr = "{PRTSC}";       bSetHandled = true;         break; }
+                  //case /*VK_INSERT*/      0x2D: { sChr = "{PRTSC}";       bSetHandled = true;         break; }
+                    case /*VK_INSERT*/      0x2C: { sChr = "{PRTSC}";       bSetHandled = true;         break; }
 
                     case /*VK_DELETE*/      0x2E: { sChr = "{DELETE}";      bSetHandled = true;         break; }
 
@@ -895,7 +897,15 @@ namespace RscRemoteSendKeys
                 //if (bOk)
                 {
                     //tbKeys.AppendText(sChr);
-                    lLastKeyPressedValue.Text = sChr;
+
+                    if ((sChr.Length == 1) && (sChr[0] < 32))
+                    {
+                        lLastKeyPressedValue.Text = "CHR(" + ((int)(sChr[0])).ToString() + ")";
+                    }
+                    else
+                    {
+                        lLastKeyPressedValue.Text = sChr;
+                    }
 
                     if (bOk)
                     {
