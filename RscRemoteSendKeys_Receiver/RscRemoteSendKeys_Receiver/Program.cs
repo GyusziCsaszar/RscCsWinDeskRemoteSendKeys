@@ -4,18 +4,31 @@ using System.Linq;
 using System.Text;
 
 using System.Net;
-using System.Net.Sockets; 
+using System.Net.Sockets;
+
+using System.Windows.Forms;
 
 namespace RscRemoteSendKeys_Receiver
 {
     class Program
     {
+
+        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v1.10";
+        protected const string csAPP_NAME = "RscRemoteSendKeys";
   
         // Incoming data from the client.  
-        public static string data = null;
+        public static string sKey = null;
+        public static string sConsoleOutLast = "";
 
         public static void StartListening()
         {
+            Console.WriteLine(csAPP_TITLE);
+            Console.WriteLine();
+            Console.WriteLine("ATTN: This app uses SendKeys.SendWait method to send keystrokes to the focused window and the system!");
+            Console.WriteLine();
+            Console.WriteLine("INFO: Use Rsc Remote SendKeys app to send keystrokes remotely.");
+            Console.WriteLine();
+
             // Data buffer for incoming data.  
             byte[] bytes = new Byte[1024];
 
@@ -34,6 +47,8 @@ namespace RscRemoteSendKeys_Receiver
             Console.WriteLine("       Port: " + iPort.ToString());
             Console.WriteLine();
 
+            Console.Write("Keystroke received: ");
+
             // Create a TCP/IP socket.  
             Socket sckListener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -51,7 +66,7 @@ namespace RscRemoteSendKeys_Receiver
 
                     // Program is suspended while waiting for an incoming connection.  
                     Socket sckRead = sckListener.Accept();
-                    data = null;
+                    sKey = null;
 
                     if (sckRead.Poll(-1, SelectMode.SelectRead))
                     {
@@ -59,7 +74,7 @@ namespace RscRemoteSendKeys_Receiver
                         while (true)
                         {
                             int bytesRec = sckRead.Receive(bytes);
-                            data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                            sKey += Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
                             if (bytesRec < bytes.Length) //data.IndexOf("<EOF>") > -1)
                             {
@@ -72,18 +87,59 @@ namespace RscRemoteSendKeys_Receiver
                         Console.Write("{0}", data);
                         */
 
-                        int iData = 0;
-                        if (Int32.TryParse(data, out iData))
+                        int iKey = 0;
+                        string sSendKeysParam = "";
+                        string sConsoleOut = "";
+                        if (sKey[0] == '{')
                         {
-                            if (iData > 0)
-                            {
-                                char cChr = (char)iData;
-                                Console.Write(cChr);
-                            }
+                            sSendKeysParam = sKey;
+
+                            sConsoleOut = sKey;
                         }
                         else
                         {
-                            Console.Write("{" + data + "}");
+                            if (Int32.TryParse(sKey, out iKey))
+                            {
+                                if (iKey > 0)
+                                {
+                                    char cChr = (char)iKey;
+
+                                    sSendKeysParam = cChr.ToString();
+
+                                    sConsoleOut = cChr.ToString();
+                                }
+                            }
+                            else
+                            {
+                                sConsoleOut = "UNKNOWN KEY: " + sKey;
+                            }
+                        }
+
+                        if (sConsoleOutLast.Length > 0)
+                        {
+                            for (int i = 0; i < sConsoleOutLast.Length; i++)
+                            {
+                                Console.Write(((char) 8));
+                            }
+                        }
+                        Console.Write(sConsoleOut);
+                        sConsoleOutLast = sConsoleOut;
+
+                        if (sSendKeysParam.Length > 0)
+                        {
+                            try
+                            {
+                                SendKeys.SendWait(sSendKeysParam);
+                            }
+                            catch (Exception exc)
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine("SendKeys.SendWait ERROR: " + exc.Message);
+                                Console.WriteLine();
+
+                                Console.Write("Keystroke received: ");
+                                sConsoleOutLast = "";
+                            }
                         }
 
                         // Echo the data back to the client.
