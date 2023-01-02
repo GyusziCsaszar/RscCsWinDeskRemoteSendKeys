@@ -24,12 +24,13 @@ namespace RscRemoteSendKeys
 
         const int ciMAX_KEY_CNT_TO_SEND_ONCE = 20; //4;
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.00";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v2.01";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
 
         private KeyBuffer m_keyBuffer = new KeyBuffer();
+        private int m_iToDoCount_Prev = -1;
 
         private NotifyIcon m_notifyIcon = null;
 
@@ -156,6 +157,27 @@ namespace RscRemoteSendKeys
 
         private void RefreshNotifyIcon()
         {
+            UpdateNotifyIcon();
+
+            if (m_keyBuffer.GetToDoCount() > 0)
+            {
+                if (Visible)
+                {
+                    Send();
+                }
+
+                if (m_notifyIcon == null)
+                    return; //User Close on Error...
+
+                if (m_iToDoCount_Prev != m_keyBuffer.GetToDoCount())
+                {
+                    UpdateNotifyIcon();
+                }
+            }
+        }
+
+        private void UpdateNotifyIcon()
+        {
 
             bool bJustCreated = false;
 
@@ -169,14 +191,13 @@ namespace RscRemoteSendKeys
 
             }
 
-            if (bJustCreated || true)
-            {
-                if (m_keyBuffer.GetToDoCount() > 0)
-                {
-                    Send();
-                }
+            int iToDoCount = m_keyBuffer.GetToDoCount();
 
-                string sTx = m_keyBuffer.GetToDoCount().ToString();
+            if (bJustCreated || (iToDoCount != m_iToDoCount_Prev))
+            {
+                m_iToDoCount_Prev = iToDoCount;
+
+                string sTx = iToDoCount.ToString();
 
                 string sInfo = "Number of keys to send";
                 m_notifyIcon.Text = sInfo;
@@ -359,21 +380,41 @@ namespace RscRemoteSendKeys
                 }
                 catch (ArgumentNullException ane)
                 {
-                    //Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                    DialogResult dr = MessageBoxEx.Show("Error sending keystroke to " + lHostValue.Text + " !\r\n\r\nArgumentNullException: " + ane.ToString(), csAPP_TITLE, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error, true /*bTopMost*/);
+                    if (dr == DialogResult.Cancel)
+                    {
+                        //Visible = false;
+                        Close();
+                    }
                 }
                 catch (SocketException se)
                 {
-                    //Console.WriteLine("SocketException : {0}", se.ToString());
+                    DialogResult dr = MessageBoxEx.Show("Error sending keystroke to " + lHostValue.Text + " !\r\n\r\nSocketException: " + se.ToString(), csAPP_TITLE, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error, true /*bTopMost*/);
+                    if (dr == DialogResult.Cancel)
+                    {
+                        //Visible = false;
+                        Close();
+                    }
                 }
                 catch (Exception e)
                 {
-                    //Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    DialogResult dr = MessageBoxEx.Show("Error sending keystroke to " + lHostValue.Text + " !\r\n\r\nException: " + e.ToString(), csAPP_TITLE, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error, true /*bTopMost*/);
+                    if (dr == DialogResult.Cancel)
+                    {
+                        //Visible = false;
+                        Close();
+                    }
                 }
 
             }
             catch (Exception e)
             {
-                //Console.WriteLine(e.ToString());
+                DialogResult dr = MessageBoxEx.Show("Error sending keystroke to " + lHostValue.Text + " !\r\n\r\nException: " + e.ToString(), csAPP_TITLE, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error, true /*bTopMost*/);
+                if (dr == DialogResult.Cancel)
+                {
+                    //Visible = false;
+                    Close();
+                }
             }
         }
 
