@@ -13,11 +13,11 @@ namespace RscRemoteSendKeys_Receiver
     class Program
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v1.02";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys Receiver v2.00";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
   
         // Incoming data from the client.  
-        public static string sKey = null;
+        public static string sKeyList = null;
         public static string sConsoleOutLast = "";
 
         public static void StartListening()
@@ -66,83 +66,86 @@ namespace RscRemoteSendKeys_Receiver
 
                     // Program is suspended while waiting for an incoming connection.  
                     Socket sckRead = sckListener.Accept();
-                    sKey = null;
 
                     if (sckRead.Poll(-1, SelectMode.SelectRead))
                     {
+                        sKeyList = "";
                         // An incoming connection needs to be processed.  
                         while (true)
                         {
                             int bytesRec = sckRead.Receive(bytes);
-                            sKey += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                            sKeyList += Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
-                            if (bytesRec < bytes.Length) //data.IndexOf("<EOF>") > -1)
+                            if ((sKeyList.Length) > 0 && (sKeyList[sKeyList.Length - 1] == '\n')) //(bytesRec < bytes.Length) //data.IndexOf("<EOF>") > -1)
                             {
+                                sKeyList = sKeyList.Substring(0, sKeyList.Length - 1);
                                 break;
                             }
                         }
 
-                        // Show the data on the console.
-                        /*
-                        Console.Write("{0}", data);
-                        */
-
-                        int iKey = 0;
-                        string sSendKeysParam = "";
-                        string sConsoleOut = "";
-                        if (sKey[0] == '{')
+                        string[] astr = sKeyList.Split('\r');
+                        foreach (string sKey in astr)
                         {
-                            sSendKeysParam = sKey;
+                            if (sKey.Length == 0)
+                                continue;
 
-                            sConsoleOut = sKey;
-                        }
-                        else
-                        {
-                            if (Int32.TryParse(sKey, out iKey))
+                            int iKey = 0;
+                            string sSendKeysParam = "";
+                            string sConsoleOut = "";
+                            if (sKey[0] == '{')
                             {
-                                if (iKey > 0)
-                                {
-                                    char cChr = (char)iKey;
+                                sSendKeysParam = sKey;
 
-                                    sSendKeysParam = cChr.ToString();
-
-                                    sConsoleOut = cChr.ToString();
-                                }
+                                sConsoleOut = sKey;
                             }
                             else
                             {
-                                sConsoleOut = "UNKNOWN KEY: " + sKey;
-                            }
-                        }
+                                if (Int32.TryParse(sKey, out iKey))
+                                {
+                                    if (iKey > 0)
+                                    {
+                                        char cChr = (char)iKey;
 
-                        if (sConsoleOutLast.Length > 0)
-                        {
-                            for (int i = 0; i < sConsoleOutLast.Length; i++)
-                            {
-                                Console.Write(((char) 8));
-                            }
-                            for (int i = sConsoleOut.Length; i < sConsoleOutLast.Length; i++)
-                            {
-                                sConsoleOut += " ";
-                            }
-                        }
-                        Console.Write(sConsoleOut);
-                        sConsoleOutLast = sConsoleOut;
+                                        sSendKeysParam = cChr.ToString();
 
-                        if (sSendKeysParam.Length > 0)
-                        {
-                            try
-                            {
-                                SendKeys.SendWait(sSendKeysParam);
+                                        sConsoleOut = cChr.ToString();
+                                    }
+                                }
+                                else
+                                {
+                                    sConsoleOut = "UNKNOWN KEY: " + sKey;
+                                }
                             }
-                            catch (Exception exc)
-                            {
-                                Console.WriteLine();
-                                Console.WriteLine("SendKeys.SendWait ERROR: " + exc.Message);
-                                Console.WriteLine();
 
-                                Console.Write("Keystroke received: ");
-                                sConsoleOutLast = "";
+                            if (sConsoleOutLast.Length > 0)
+                            {
+                                for (int i = 0; i < sConsoleOutLast.Length; i++)
+                                {
+                                    Console.Write(((char)8));
+                                }
+                                for (int i = sConsoleOut.Length; i < sConsoleOutLast.Length; i++)
+                                {
+                                    sConsoleOut += " ";
+                                }
+                            }
+                            Console.Write(sConsoleOut);
+                            sConsoleOutLast = sConsoleOut;
+
+                            if (sSendKeysParam.Length > 0)
+                            {
+                                try
+                                {
+                                    SendKeys.SendWait(sSendKeysParam);
+                                }
+                                catch (Exception exc)
+                                {
+                                    Console.WriteLine();
+                                    Console.WriteLine("SendKeys.SendWait ERROR: " + exc.Message);
+                                    Console.WriteLine();
+
+                                    Console.Write("Keystroke received: ");
+                                    sConsoleOutLast = "";
+                                }
                             }
                         }
 
