@@ -37,7 +37,7 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnHide = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
-            this.lbKeys = new System.Windows.Forms.ListBox();
+            this.tbKeys = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // btnClose
@@ -118,15 +118,16 @@
             this.btnSettings.UseVisualStyleBackColor = true;
             this.btnSettings.Click += new System.EventHandler(this.btnSettings_Click);
             // 
-            // lbKeys
+            // tbKeys
             // 
-            this.lbKeys.BackColor = System.Drawing.Color.DimGray;
-            this.lbKeys.ForeColor = System.Drawing.SystemColors.Info;
-            this.lbKeys.FormattingEnabled = true;
-            this.lbKeys.Location = new System.Drawing.Point(6, 35);
-            this.lbKeys.Name = "lbKeys";
-            this.lbKeys.Size = new System.Drawing.Size(270, 82);
-            this.lbKeys.TabIndex = 10;
+            this.tbKeys.BackColor = System.Drawing.Color.DimGray;
+            this.tbKeys.ForeColor = System.Drawing.Color.White;
+            this.tbKeys.Location = new System.Drawing.Point(6, 35);
+            this.tbKeys.Multiline = true;
+            this.tbKeys.Name = "tbKeys";
+            this.tbKeys.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tbKeys.Size = new System.Drawing.Size(270, 85);
+            this.tbKeys.TabIndex = 10;
             // 
             // FormMain
             // 
@@ -134,7 +135,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(284, 126);
-            this.Controls.Add(this.lbKeys);
+            this.Controls.Add(this.tbKeys);
             this.Controls.Add(this.btnSettings);
             this.Controls.Add(this.btnHide);
             this.Controls.Add(this.chbAutoStart);
@@ -164,7 +165,7 @@
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Button btnHide;
         private System.Windows.Forms.Button btnSettings;
-        private System.Windows.Forms.ListBox lbKeys;
+        private System.Windows.Forms.TextBox tbKeys;
     }
 }
 

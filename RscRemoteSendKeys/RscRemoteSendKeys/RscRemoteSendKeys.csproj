@@ -57,6 +57,9 @@
     <Compile Include="..\RscUtilsCs\StorageRegistry.cs">
       <Link>StorageRegistry.cs</Link>
     </Compile>
+    <Compile Include="..\SnagFree\GlobalKeyboardHook.cs">
+      <Link>GlobalKeyboardHook.cs</Link>
+    </Compile>
     <Compile Include="FormGraph.cs">
       <SubType>Form</SubType>
     </Compile>

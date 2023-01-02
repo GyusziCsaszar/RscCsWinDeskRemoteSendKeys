@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 
 using Ressive.Utils;
 
+using SnagFree.GlobalKeyboardHook;
+
 namespace RscRemoteSendKeys
 {
     public partial class FormMain : Form
@@ -19,6 +21,8 @@ namespace RscRemoteSendKeys
 
         public const string csAPP_TITLE = "Rsc Remote SendKeys v1.00";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
+
+        private GlobalKeyboardHook m_globalKeyboardHook;
 
         private NotifyIcon m_notifyIcon = null;
 
@@ -84,6 +88,8 @@ namespace RscRemoteSendKeys
             }
 
             RefreshNotifyIcon();
+
+            SetupKeyboardHooks();
         }
 
         private void PlaceWindow()
@@ -132,6 +138,8 @@ namespace RscRemoteSendKeys
 
                 m_notifyIcon = null;
             }
+
+            m_globalKeyboardHook.Dispose();
         }
 
         private void RefreshNotifyIcon()
@@ -321,5 +329,195 @@ namespace RscRemoteSendKeys
             m_sLogPath = StorageRegistry.Read("LogPath", "");
             m_bDoLog = (System.IO.File.Exists(m_sLogPath)) && (StorageRegistry.Read("DoLog", 0) > 0);
         }
+
+        public void SetupKeyboardHooks()
+        {
+            m_globalKeyboardHook = new GlobalKeyboardHook();
+            m_globalKeyboardHook.KeyboardPressed += OnKeyPressed;
+        }
+
+        private void OnKeyPressed(object sender, GlobalKeyboardHookEventArgs e)
+        {
+            //Debug.WriteLine(e.KeyboardData.VirtualCode);
+
+            //if (e.KeyboardData.VirtualCode != GlobalKeyboardHook.VkSnapshot)
+            //    return;
+
+            // seems, not needed in the life.
+            //if (e.KeyboardState == GlobalKeyboardHook.KeyboardState.SysKeyDown &&
+            //    e.KeyboardData.Flags == GlobalKeyboardHook.LlkhfAltdown)
+            //{
+            //    MessageBox.Show("Alt + Print Screen");
+            //    e.Handled = true;
+            //}
+            //else
+
+            if (e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown)
+            {
+                bool bSetHandled = false;
+
+                string sChr = "";
+
+                switch (e.KeyboardData.VirtualCode)
+                {
+
+                    case /*VK_TAB*/	0x09:
+                    {
+                        //sChr = "VK_TAB";
+                        sChr = "\t";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_RETURN*/ 0x0D:
+                    {
+                        //sChr = "VK_RETURN";
+                        sChr = "\r\n";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_SPACE*/ 0x20:
+                    {
+                        sChr = " ";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_LSHIFT*/ 0xA0 :
+                    {
+                        //sChr = "VK_LSHIFT";
+                        break;
+                    }
+
+                    case /*VK_RSHIFT*/ 0xA1 :
+                    {
+                        //sChr = "VK_RSHIFT";
+                        break;
+                    }
+
+                    case /*VK_LCONTROL*/ 0xA2:
+                    {
+                        //sChr = "VK_LCONTROL";
+                        break;
+                    }
+
+                    case /*VK_RCONTROL*/ 0xA3:
+                    {
+                        //sChr = "VK_RCONTROL";
+                        break;
+                    }
+
+                    case /*VK_LMENU*/ 0xA4:
+                    {
+                        //sChr = "VK_LMENU";
+                        break;
+                    }
+
+                    case /*VK_RMENU*/ 0xA5:
+                    {
+                        //sChr = "VK_RMENU";
+                        break;
+                    }
+
+                    default:
+                    {
+                        bSetHandled = true;
+
+                        KeysConverter kc = new KeysConverter();
+                        string sVK = kc.ConvertToString(e.KeyboardData.VirtualCode);
+
+                        // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
+                        byte[] keyboardState = new byte[256];
+                        bool keyboardStateStatus = GetKeyboardState(keyboardState);
+
+                        if ((GetAsyncKeyState(/*VK_SHIFT*/	0x10) & 0x8001) > 0) { keyboardState[(int)Keys.ShiftKey] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_RSHIFT*/ 0xA1) & 0x8001) > 0) { keyboardState[(int)Keys.RShiftKey] = 0xFF; keyboardState[(int)Keys.ShiftKey] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_RSHIFT*/ 0xA1) & 0x8001) > 0) { keyboardState[(int)Keys.RShiftKey] = 0xFF; keyboardState[(int)Keys.ShiftKey] = 0xFF; }
+
+                        if ((GetAsyncKeyState(/*VK_CONTROL*/  0x11) & 0x8001) > 0) { keyboardState[(int)Keys.ControlKey] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_LCONTROL*/ 0xA2) & 0x8001) > 0) { keyboardState[(int)Keys.LControlKey] = 0xFF; keyboardState[(int)Keys.ControlKey] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_RCONTROL*/ 0xA3) & 0x8001) > 0) { keyboardState[(int)Keys.RControlKey] = 0xFF; keyboardState[(int)Keys.ControlKey] = 0xFF; }
+
+                        if ((GetAsyncKeyState(/*VK_MENU*/	0x12) & 0x8001) > 0) { keyboardState[(int)Keys.Menu] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_LMENU*/	0xA4) & 0x8001) > 0) { keyboardState[(int)Keys.LMenu] = 0xFF; keyboardState[(int)Keys.Menu] = 0xFF; }
+                        if ((GetAsyncKeyState(/*VK_RMENU*/	0xA5) & 0x8001) > 0) { keyboardState[(int)Keys.RMenu] = 0xFF; keyboardState[(int)Keys.Menu] = 0xFF; }
+
+                        // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
+                        IntPtr inputLocaleIdentifier = GetKeyboardLayout(0);
+
+                        // 0 - MAPVK_VK_TO_VSC
+                        // 1 - MAPVK_VSC_TO_VK
+                        // 2 - MAPVK_VK_TO_CHAR
+                        //uint scanCode = MapVirtualKey((uint) e.KeyboardData.VirtualCode, 0);
+                        //uint scanCode = MapVirtualKeyEx((uint)e.KeyboardData.VirtualCode, 0, inputLocaleIdentifier);
+
+                        StringBuilder result = new StringBuilder();
+                        int iRes = ToUnicodeEx((uint)e.KeyboardData.VirtualCode, 0 /*scanCode*/, keyboardState, result, (int)5, (uint)0, inputLocaleIdentifier);
+                        switch (iRes)
+                        {
+
+                            case -1:
+                                sChr += "dead key";
+                                break;
+
+                            case 0:
+                                sChr += "no idea!";
+                                break;
+
+                            case 1:
+                            case 2:
+                            case 3:
+                            case 4:
+                                sChr += result.ToString();
+                                break;
+                        }
+
+                        if (sVK.Length != 1) // && sVK.Substring(0, 3) != "Oem")
+                        {
+                            sChr += "\r\n" + sVK;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (sChr.Length > 0)
+                {
+                    tbKeys.AppendText(sChr);
+                }
+
+                if (Visible)
+                {
+                    e.Handled = bSetHandled;
+                }
+            }
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool GetKeyboardState(byte[] lpKeyState);
+
+        [DllImport("user32.dll")]
+        static extern short GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+        [DllImport("user32.dll")]
+        static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr HKL);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetKeyboardLayout(uint idThread);
+
+        [DllImport("user32.dll")]
+        static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
     }
 }
