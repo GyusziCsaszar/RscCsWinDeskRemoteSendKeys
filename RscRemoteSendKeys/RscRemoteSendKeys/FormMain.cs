@@ -22,7 +22,7 @@ namespace RscRemoteSendKeys
     public partial class FormMain : Form
     {
 
-        public const string csAPP_TITLE = "Rsc Remote SendKeys v1.02";
+        public const string csAPP_TITLE = "Rsc Remote SendKeys v1.03";
         protected const string csAPP_NAME = "RscRemoteSendKeys";
 
         private GlobalKeyboardHook m_globalKeyboardHook;
@@ -564,6 +564,15 @@ namespace RscRemoteSendKeys
                     case /*VK_DOWN*/ 0x28:
                     {
                         sChr = "{DOWN}";
+
+                        bSetHandled = true;
+
+                        break;
+                    }
+
+                    case /*VK_SNAPSHOT*/ 0x2C:
+                    {
+                        sChr = "{PRTSC}";
 
                         bSetHandled = true;
 
